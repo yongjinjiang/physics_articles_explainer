@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for smooth scrolling and transitions */
+@layer utilities {
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Highlighting styles for explanations */
+.explanation-highlight {
+  @apply border-l-4 border-blue-500 bg-blue-50 transition-all duration-300;
+}
+
+.explanation-fade {
+  @apply opacity-100 transition-opacity duration-300;
+}
+
+.explanation-hidden {
+  @apply opacity-60;
+}
