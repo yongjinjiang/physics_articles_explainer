@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { base } from '$app/paths';
   import type { PageData } from './$types';
   import type { ExplanationSection } from '$lib/types/article';
 
@@ -30,7 +31,7 @@
   <!-- Header -->
   <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-8">
     <div class="container mx-auto px-4">
-      <a href="/" class="text-sm hover:underline mb-2 inline-block opacity-90">
+      <a href="{base}/" class="text-sm hover:underline mb-2 inline-block opacity-90">
         ← Back to Articles
       </a>
       <h1 class="text-4xl font-bold mb-2">{data.metadata.title}</h1>

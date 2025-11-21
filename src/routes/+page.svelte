@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { base } from '$app/paths';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -22,7 +23,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {#each data.articles as article}
         <a
-          href="/article/{article.slug}"
+          href="{base}/article/{article.slug}"
           class="block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden group"
         >
           <div class="p-6">
