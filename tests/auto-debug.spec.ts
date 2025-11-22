@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+const ARTICLES = [
+  { slug: 'quantum-entanglement', name: 'Quantum Entanglement' },
+  { slug: 'bekenstein-bound', name: 'Bekenstein Bound' }
+];
+
 test('monkey test - click all interactive elements and catch errors', async ({ page }) => {
   const browserErrors: string[] = [];
   const consoleMessages: string[] = [];
@@ -26,10 +31,16 @@ test('monkey test - click all interactive elements and catch errors', async ({ p
     browserErrors.push(errorText);
   });
 
-  // Navigate to the article page
-  console.log('\n=== Navigating to article page ===');
-  await page.goto('http://localhost:5173/article/quantum-entanglement');
-  await page.waitForLoadState('networkidle');
+  // Test each article
+  for (const article of ARTICLES) {
+    console.log(`\n\n${'='.repeat(60)}`);
+    console.log(`TESTING ARTICLE: ${article.name}`);
+    console.log(`${'='.repeat(60)}\n`);
+
+    // Navigate to the article page
+    console.log('=== Navigating to article page ===');
+    await page.goto(`http://localhost:5174/article/${article.slug}`);
+    await page.waitForLoadState('networkidle');
 
   // Wait for the page to be fully rendered
   await page.waitForTimeout(1000);
@@ -77,66 +88,72 @@ test('monkey test - click all interactive elements and catch errors', async ({ p
   }
   console.log('===========================\n');
 
-  // Click each element
-  for (let i = 0; i < clickableElements.length; i++) {
-    const element = clickableElements[i];
+    // Click each element
+    for (let i = 0; i < clickableElements.length; i++) {
+      const element = clickableElements[i];
 
-    try {
-      // Get the text content for logging
-      const text = await element.textContent();
-      const trimmedText = text?.trim().substring(0, 50) || '(no text)';
+      try {
+        // Get the text content for logging
+        const text = await element.textContent();
+        const trimmedText = text?.trim().substring(0, 50) || '(no text)';
 
-      // Skip navigation links
-      if (trimmedText.includes('View Original') || trimmedText.includes('Back to')) {
-        console.log(`\n--- Skipping ${i + 1}/${clickableElements.length}: "${trimmedText}" ---`);
-        continue;
+        // Skip navigation links
+        if (trimmedText.includes('View Original') || trimmedText.includes('Back to')) {
+          console.log(`\n--- Skipping ${i + 1}/${clickableElements.length}: "${trimmedText}" ---`);
+          continue;
+        }
+
+        console.log(`\n--- Click ${i + 1}/${clickableElements.length}: "${trimmedText}" ---`);
+
+        // Check if element is visible and enabled
+        const isVisible = await element.isVisible();
+        const isEnabled = await element.isEnabled();
+
+        if (!isVisible) {
+          console.log('  ⚠️  Element not visible, skipping');
+          continue;
+        }
+
+        if (!isEnabled) {
+          console.log('  ⚠️  Element not enabled, skipping');
+          continue;
+        }
+
+        // Record URL before click
+        const urlBefore = page.url();
+
+        // Click the element
+        await element.click({ timeout: 5000 });
+
+        // Wait a bit for any effects
+        await page.waitForTimeout(500);
+
+        // Check if navigation occurred
+        const urlAfter = page.url();
+        if (urlBefore !== urlAfter) {
+          console.log(`  🔄 Navigation detected: ${urlAfter}`);
+          console.log('  ⬅️  Going back');
+          await page.goBack();
+          await page.waitForLoadState('networkidle');
+        }
+
+        console.log('  ✅ Click successful');
+
+      } catch (error: any) {
+        console.log(`  ❌ Click failed: ${error.message}`);
       }
-
-      console.log(`\n--- Click ${i + 1}/${clickableElements.length}: "${trimmedText}" ---`);
-
-      // Check if element is visible and enabled
-      const isVisible = await element.isVisible();
-      const isEnabled = await element.isEnabled();
-
-      if (!isVisible) {
-        console.log('  ⚠️  Element not visible, skipping');
-        continue;
-      }
-
-      if (!isEnabled) {
-        console.log('  ⚠️  Element not enabled, skipping');
-        continue;
-      }
-
-      // Record URL before click
-      const urlBefore = page.url();
-
-      // Click the element
-      await element.click({ timeout: 5000 });
-
-      // Wait a bit for any effects
-      await page.waitForTimeout(500);
-
-      // Check if navigation occurred
-      const urlAfter = page.url();
-      if (urlBefore !== urlAfter) {
-        console.log(`  🔄 Navigation detected: ${urlAfter}`);
-        console.log('  ⬅️  Going back');
-        await page.goBack();
-        await page.waitForLoadState('networkidle');
-      }
-
-      console.log('  ✅ Click successful');
-
-    } catch (error: any) {
-      console.log(`  ❌ Click failed: ${error.message}`);
     }
+
+    console.log(`\n=== Test Summary for ${article.name} ===`);
+    console.log(`Total clickable elements tested: ${clickableElements.length}`);
+    console.log(`Browser errors captured: ${browserErrors.length}`);
   }
 
-  console.log('\n=== Test Summary ===');
-  console.log(`Total clickable elements tested: ${clickableElements.length}`);
-  console.log(`Browser errors captured: ${browserErrors.length}`);
-  console.log(`Console messages: ${consoleMessages.length}`);
+  console.log(`\n${'='.repeat(60)}`);
+  console.log('=== OVERALL TEST SUMMARY ===');
+  console.log(`${'='.repeat(60)}`);
+  console.log(`Total browser errors captured: ${browserErrors.length}`);
+  console.log(`Total console messages: ${consoleMessages.length}`);
 
   // Print all browser errors
   if (browserErrors.length > 0) {
