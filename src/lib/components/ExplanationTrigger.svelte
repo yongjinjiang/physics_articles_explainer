@@ -6,12 +6,25 @@
   }
 
   let { id, scrollToExplanation, children }: Props = $props();
+
+  function handleClick(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    scrollToExplanation(id);
+  }
 </script>
 
-<button
-  type="button"
+<span
+  role="button"
+  tabindex="0"
   class="article-trigger"
-  onclick={() => scrollToExplanation(id)}
+  onclick={handleClick}
+  onkeydown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick(e as any);
+    }
+  }}
 >
   {@render children?.()}
-</button>
+</span>

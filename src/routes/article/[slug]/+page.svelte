@@ -1,24 +1,49 @@
 <script lang="ts">
   import { base } from '$app/paths';
+  import { tick } from 'svelte';
   import type { PageData } from './$types';
   import type { ExplanationSection } from '$lib/types/article';
 
   let { data }: { data: PageData } = $props();
 
   let activeExplanationId = $state<string | null>(null);
-  let explanationRefs: Record<string, HTMLElement> = {};
 
   const Content = data.Content;
 
-  function scrollToExplanation(id: string) {
-    activeExplanationId = id;
-    const element = explanationRefs[id];
+  async function scrollToExplanation(id: string) {
+    // Trim any quotes that might have been added by the markdown processor
+    // The mdsvex processor converts straight quotes to typographic (curly) quotes
+    let cleanId = id;
 
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
+    // Remove all quote characters (straight and curly, single and double) from start and end
+    // Unicode codes: 8220 = ", 8221 = ", 8216 = ', 8217 = '
+    const quotes = ['"', '"', '"', "'", "'", "'", String.fromCharCode(8220), String.fromCharCode(8221), String.fromCharCode(8216), String.fromCharCode(8217)];
+    while (cleanId.length > 0 && quotes.includes(cleanId[0])) {
+      cleanId = cleanId.slice(1);
+    }
+    while (cleanId.length > 0 && quotes.includes(cleanId[cleanId.length - 1])) {
+      cleanId = cleanId.slice(0, -1);
+    }
+
+    // Set active state to highlight the explanation
+    activeExplanationId = cleanId;
+
+    // Wait for Svelte to complete its reactive updates
+    await tick();
+
+    // Then wait for the next animation frame to ensure DOM is painted
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    // Find the explanation container and scroll to the matching element
+    const explanationContainer = document.querySelector('.space-y-6');
+    if (explanationContainer) {
+      const element = explanationContainer.querySelector(`[data-explanation-id="${cleanId}"]`);
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     }
   }
 
@@ -75,20 +100,22 @@
         {#if data.explanations.length === 0}
           <p class="text-gray-500">No explanations available for this article yet.</p>
         {:else}
-          <div class="space-y-6">
-            {#each data.explanations as explanation (explanation.id)}
+          <div class="space-y-4">
+            {#each data.explanations as explanation, index (explanation.id)}
               <div
-                bind:this={explanationRefs[explanation.id]}
                 class="p-6 rounded-lg transition-all duration-300 {isActive(explanation.id)
-                  ? 'explanation-highlight'
-                  : 'bg-white border border-gray-200 explanation-hidden'}"
+                  ? 'explanation-highlight shadow-lg scale-105'
+                  : 'bg-white border border-gray-200 hover:border-gray-300'}"
                 id={explanation.id}
+                data-explanation-id={explanation.id}
               >
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">
+                <h3 class="text-lg font-bold text-gray-900 mb-3">
                   {explanation.title}
                 </h3>
-                <div class="text-gray-700 leading-relaxed prose prose-sm max-w-none">
-                  {@html explanation.content}
+                <div class="text-gray-700 leading-relaxed text-sm">
+                  <div class="prose prose-sm max-w-none">
+                    {@html explanation.content}
+                  </div>
                 </div>
               </div>
             {/each}
