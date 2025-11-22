@@ -34,14 +34,23 @@
     // Then wait for the next animation frame to ensure DOM is painted
     await new Promise(resolve => requestAnimationFrame(resolve));
 
-    // Find the explanation container and scroll to the matching element
-    const explanationContainer = document.querySelector('.space-y-6');
-    if (explanationContainer) {
-      const element = explanationContainer.querySelector(`[data-explanation-id="${cleanId}"]`);
-      if (element) {
-        element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
+    // Find the explanation's scrollable container and scroll to the matching element
+    const element = document.querySelector(`[data-explanation-id="${cleanId}"]`);
+    if (element) {
+      // Find the scrollable parent container
+      let scrollContainer = element.parentElement;
+      while (scrollContainer && getComputedStyle(scrollContainer).overflowY !== 'auto') {
+        scrollContainer = scrollContainer.parentElement;
+      }
+
+      if (scrollContainer) {
+        const elementTop = element.getBoundingClientRect().top;
+        const containerTop = scrollContainer.getBoundingClientRect().top;
+        const scrollOffset = elementTop - containerTop + scrollContainer.scrollTop;
+
+        scrollContainer.scrollTo({
+          top: Math.max(0, scrollOffset - 20),
+          behavior: 'smooth'
         });
       }
     }
